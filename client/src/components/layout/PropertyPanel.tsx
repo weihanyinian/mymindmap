@@ -2,16 +2,16 @@ import { useUIStore } from '../../stores/uiStore';
 import { useMindMapStore } from '../../stores/mindmapStore';
 import NodeStylePanel from '../panels/NodeStylePanel';
 import NodeNotesPanel from '../panels/NodeNotesPanel';
+import { useT } from '../../lib/i18n';
 import { Settings, FileText } from 'lucide-react';
 import clsx from 'clsx';
 
 export default function PropertyPanel() {
   const { propertyPanelOpen, propertyPanelTab, setPanelTab, closePanel } = useUIStore();
   const { selectedNodeId, nodeMap } = useMindMapStore();
+  const t = useT();
 
   if (!propertyPanelOpen) return null;
-
-  const selectedNode = selectedNodeId ? nodeMap.get(selectedNodeId) : null;
 
   return (
     <div className="w-72 border-l border-gray-200 bg-white flex flex-col shrink-0">
@@ -24,7 +24,7 @@ export default function PropertyPanel() {
           )}
         >
           <Settings className="w-3.5 h-3.5" />
-          Style
+          {t.panel.style}
         </button>
         <button
           onClick={() => setPanelTab('notes')}
@@ -34,13 +34,13 @@ export default function PropertyPanel() {
           )}
         >
           <FileText className="w-3.5 h-3.5" />
-          Notes
+          {t.panel.notes}
         </button>
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {!selectedNode ? (
-          <p className="text-xs text-gray-400 p-4 text-center">Select a node to edit its properties</p>
+        {!selectedNodeId ? (
+          <p className="text-xs text-gray-400 p-4 text-center">{t.panel.noSelection}</p>
         ) : propertyPanelTab === 'style' ? (
           <NodeStylePanel />
         ) : (

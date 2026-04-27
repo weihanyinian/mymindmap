@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
+import { useT, useLanguage } from '../../lib/i18n';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
@@ -9,6 +10,8 @@ export default function RegisterPage() {
   const [submitting, setSubmitting] = useState(false);
   const { register, error, clearError } = useAuthStore();
   const navigate = useNavigate();
+  const t = useT();
+  const { lang, setLang } = useLanguage();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -24,9 +27,16 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-sm">
+        <button
+          onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')}
+          className="absolute top-4 right-4 text-sm text-gray-500 hover:text-gray-700 border border-gray-300 rounded-md px-3 py-1"
+        >
+          {t.language.switch}
+        </button>
+
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900">MindFlow</h1>
-          <p className="text-gray-500 mt-1">Create your account</p>
+          <p className="text-gray-500 mt-1">{t.auth.registerTitle}</p>
         </div>
 
         <form
@@ -44,7 +54,7 @@ export default function RegisterPage() {
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email
+              {t.auth.email}
             </label>
             <input
               id="email"
@@ -52,7 +62,7 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="input-field"
-              placeholder="you@example.com"
+              placeholder={t.auth.emailPlaceholder}
               required
               autoFocus
             />
@@ -60,7 +70,7 @@ export default function RegisterPage() {
 
           <div>
             <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-              Username
+              {t.auth.username}
             </label>
             <input
               id="username"
@@ -68,7 +78,7 @@ export default function RegisterPage() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="input-field"
-              placeholder="Your display name"
+              placeholder={t.auth.usernamePlaceholder}
               required
               minLength={2}
               maxLength={30}
@@ -77,7 +87,7 @@ export default function RegisterPage() {
 
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Password
+              {t.auth.password}
             </label>
             <input
               id="password"
@@ -85,20 +95,20 @@ export default function RegisterPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="input-field"
-              placeholder="At least 6 characters"
+              placeholder={t.auth.passwordMin}
               required
               minLength={6}
             />
           </div>
 
           <button type="submit" disabled={submitting} className="btn-primary w-full text-center">
-            {submitting ? 'Creating account...' : 'Create account'}
+            {submitting ? t.auth.registering : t.auth.register}
           </button>
 
           <p className="text-sm text-center text-gray-500">
-            Already have an account?{' '}
+            {t.auth.hasAccount}{' '}
             <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
-              Sign in
+              {t.auth.signIn}
             </Link>
           </p>
         </form>

@@ -1,9 +1,13 @@
 import { env } from './config/env';
 import { connectDB } from './config/db';
 import { createApp } from './app';
+import { seedAdminUser } from './services/seed.service';
 
 async function main() {
   await connectDB();
+
+  // Seed admin account and demo data
+  await seedAdminUser();
 
   const app = createApp();
 
