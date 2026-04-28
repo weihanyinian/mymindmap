@@ -26,8 +26,9 @@ export default function MindMapNode({ d3Node, isSelected, isDragTarget, hasChild
   const t = useT();
   const isRoot = currentMap?.rootNode.id === node.id;
 
-  const nodeWidth = 140;
-  const nodeHeight = 36;
+  const nodeWidth = d3Node.textWidth || 140;
+  const imageHeight = node.image ? 24 : 0;
+  const nodeHeight = 36 + imageHeight + (node.image ? 4 : 0);
   const x = d3Node.x - nodeWidth / 2;
   const y = d3Node.y - nodeHeight / 2;
   const rx = style.shape === 'pill' ? nodeHeight / 2 : style.shape === 'rounded' ? 8 : style.shape === 'underline' ? 0 : 4;
@@ -120,6 +121,19 @@ export default function MindMapNode({ d3Node, isSelected, isDragTarget, hasChild
 
         {renderNodeShape()}
 
+        {/* Image thumbnail */}
+        {node.image && (
+          <image
+            href={node.image}
+            x={x + 6}
+            y={y + 6}
+            width={nodeWidth - 12}
+            height={imageHeight}
+            preserveAspectRatio="xMidYMid slice"
+            rx={4}
+          />
+        )}
+
         {(hovered || isSelected) && (
           <g transform={`translate(${x + nodeWidth - 10}, ${y + nodeHeight / 2})`} opacity={0.4}>
             <circle r={1} cy={-3} fill={style.strokeColor} />
@@ -148,7 +162,7 @@ export default function MindMapNode({ d3Node, isSelected, isDragTarget, hasChild
               style={{ fontSize: `${style.fontSize}px`, color: style.fontColor, fontFamily: 'inherit' }} />
           </foreignObject>
         ) : (
-          <text x={d3Node.x} y={d3Node.y + 1} textAnchor="middle" dominantBaseline="central"
+          <text x={d3Node.x} y={d3Node.y + 1 + (node.image ? 14 : 0)} textAnchor="middle" dominantBaseline="central"
             fontSize={style.fontSize} fill={style.fontColor} onDoubleClick={handleDoubleClick}
             style={{ userSelect: 'none', fontWeight: isSelected ? 600 : 500 }}
             className="pointer-events-auto">

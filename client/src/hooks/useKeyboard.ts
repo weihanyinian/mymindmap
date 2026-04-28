@@ -40,13 +40,18 @@ export function useKeyboard() {
         return;
       }
 
-      // Enter: Add sibling (or child for root)
-      if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
+      // Enter: Add child
+      if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        if (selectedNodeId) addChild(selectedNodeId);
+        return;
+      }
+
+      // Shift+Enter: Add sibling
+      if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault();
         if (selectedNodeId && currentMap && selectedNodeId !== currentMap.rootNode.id) {
           addSibling(selectedNodeId);
-        } else if (selectedNodeId) {
-          addChild(selectedNodeId);
         }
         return;
       }
@@ -76,6 +81,33 @@ export function useKeyboard() {
         const svgTextEl = document.querySelector(`[data-node-id="${selectedNodeId}"] text`);
         if (svgTextEl) {
           svgTextEl.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+        }
+        return;
+      }
+
+      // Ctrl+V: Paste image from clipboard
+      if ((e.ctrlKey || e.metaKey) && e.key === 'v' && selectedNodeId) {
+        if (navigator.clipboard && typeof navigator.clipboard.read === 'function') {
+          navigator.clipboard.read().then((clipboardItems) => {
+            for (const item of clipboardItems) {
+              for (const type of item.types) {
+                if (type.startsWith('image/')) {
+                  e.preventDefault();
+                  item.getType(type).then((blob) => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      const dataUrl = reader.result as string;
+                      addChild(selectedNodeId, dataUrl);
+                    };
+                    reader.readAsDataURL(blob);
+                  });
+                  return;
+                }
+              }
+            }
+          }).catch(() => {
+            // Clipboard read failed — user may not have granted permission
+          });
         }
         return;
       }

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import type { IMindMap, IMindMapSummary, IMindMapNode } from '@mindflow/shared';
+import type { IMindMap, IMindMapSummary, IMindMapNode, INodeStyle } from '@mindflow/shared';
+import { NODE_COLOR_PALETTE, DEFAULT_NODE_STYLE } from '@mindflow/shared';
 import { mindmapApi } from '../api/mindmap.api';
 import { nanoid } from 'nanoid';
 
@@ -16,6 +17,7 @@ interface MindMapState {
   undoStack: IMindMapNode[];
   redoStack: IMindMapNode[];
   copiedNode: IMindMapNode | null;
+  nodeColorIndex: number;
 
   fetchList: () => Promise<void>;
   loadMap: (id: string) => Promise<void>;
@@ -24,7 +26,7 @@ interface MindMapState {
   selectNode: (id: string | null) => void;
 
   updateNode: (id: string, changes: Partial<IMindMapNode>) => void;
-  addChild: (parentId: string) => void;
+  addChild: (parentId: string, image?: string) => void;
   addSibling: (nodeId: string) => void;
   deleteNode: (id: string) => void;
   toggleCollapse: (id: string) => void;
@@ -63,6 +65,11 @@ function deepCloneWithNewIds(node: IMindMapNode): IMindMapNode {
   };
 }
 
+function nextNodeStyle(colorIndex: number): INodeStyle {
+  const paletteColor = NODE_COLOR_PALETTE[colorIndex % NODE_COLOR_PALETTE.length];
+  return { ...DEFAULT_NODE_STYLE, ...paletteColor };
+}
+
 export const useMindMapStore = create<MindMapState>((set, get) => ({
   mindMaps: [],
   currentMap: null,
@@ -75,6 +82,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
   undoStack: [],
   redoStack: [],
   copiedNode: null,
+  nodeColorIndex: 0,
 
   fetchList: async () => {
     set({ isLoadingList: true });
@@ -146,8 +154,8 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
     });
   },
 
-  addChild: (parentId) => {
-    const { currentMap, undoStack } = get();
+  addChild: (parentId, image?) => {
+    const { currentMap, undoStack, nodeColorIndex } = get();
     if (!currentMap) return;
 
     if (undoStack.length === 0) {
@@ -156,23 +164,15 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
 
     const newNode: IMindMapNode = {
       id: nanoid(8),
-      title: 'New Topic',
+      title: image ? 'Image' : 'New Topic',
       children: [],
       position: { x: 0, y: 0 },
-      style: {
-        fillColor: '#FFFFFF',
-        strokeColor: '#4A90D9',
-        fontColor: '#333333',
-        fontSize: 14,
-        shape: 'rounded',
-        lineType: 'curve',
-        lineColor: '#B0BEC5',
-        lineWidth: 2,
-      },
+      style: nextNodeStyle(nodeColorIndex),
       collapsed: false,
       notes: '',
       labels: [],
       icons: [],
+      image,
     };
 
     const addInTree = (node: IMindMapNode): IMindMapNode => {
@@ -188,11 +188,12 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
       nodeMap: buildNodeMap(newRoot),
       selectedNodeId: newNode.id,
       isDirty: true,
+      nodeColorIndex: nodeColorIndex + 1,
     });
   },
 
   addSibling: (nodeId) => {
-    const { currentMap, undoStack } = get();
+    const { currentMap, undoStack, nodeColorIndex } = get();
     if (!currentMap) return;
     if (nodeId === currentMap.rootNode.id) return; // Cannot add sibling to root
 
@@ -205,16 +206,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
       title: 'New Topic',
       children: [],
       position: { x: 0, y: 0 },
-      style: {
-        fillColor: '#FFFFFF',
-        strokeColor: '#4A90D9',
-        fontColor: '#333333',
-        fontSize: 14,
-        shape: 'rounded',
-        lineType: 'curve',
-        lineColor: '#B0BEC5',
-        lineWidth: 2,
-      },
+      style: nextNodeStyle(nodeColorIndex),
       collapsed: false,
       notes: '',
       labels: [],
@@ -237,6 +229,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
       nodeMap: buildNodeMap(newRoot),
       selectedNodeId: newNode.id,
       isDirty: true,
+      nodeColorIndex: nodeColorIndex + 1,
     });
   },
 

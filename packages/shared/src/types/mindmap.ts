@@ -22,6 +22,7 @@ export interface IMindMapNode {
   notes: string;
   labels: string[];
   icons: string[];
+  image?: string;
 }
 
 export interface IMindMap {
@@ -55,3 +56,16 @@ export const DEFAULT_NODE_STYLE: INodeStyle = {
   lineColor: '#B0BEC5',
   lineWidth: 2,
 };
+
+export const NODE_COLOR_PALETTE = [
+  { fillColor: '#E3F2FD', strokeColor: '#1E88E5', fontColor: '#1565C0' },
+  { fillColor: '#FCE4EC', strokeColor: '#E91E63', fontColor: '#AD1457' },
+  { fillColor: '#E8F5E9', strokeColor: '#43A047', fontColor: '#2E7D32' },
+  { fillColor: '#FFF3E0', strokeColor: '#FB8C00', fontColor: '#E65100' },
+  { fillColor: '#EDE7F6', strokeColor: '#7B1FA2', fontColor: '#6A1B9A' },
+  { fillColor: '#E0F7FA', strokeColor: '#00ACC1', fontColor: '#00838F' },
+  { fillColor: '#FFF8E1', strokeColor: '#FFB300', fontColor: '#FF8F00' },
+  { fillColor: '#F1F8E9', strokeColor: '#689F38', fontColor: '#33691E' },
+  { fillColor: '#FBE9E7', strokeColor: '#E64A19', fontColor: '#BF360C' },
+  { fillColor: '#E8EAF6', strokeColor: '#3949AB', fontColor: '#1A237E' },
+];

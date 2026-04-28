@@ -36,12 +36,13 @@ export default function Toolbar() {
       if (e.key === 'Tab') {
         e.preventDefault();
         if (selectedNodeId) addChild(selectedNodeId);
-      } else if (e.key === 'Enter') {
+      } else if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (selectedNodeId) addChild(selectedNodeId);
+      } else if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault();
         if (selectedNodeId && currentMap && selectedNodeId !== currentMap.rootNode.id) {
           addSibling(selectedNodeId);
-        } else if (selectedNodeId) {
-          addChild(selectedNodeId);
         }
       } else if (e.key === 'Delete' && selectedNodeId) {
         e.preventDefault();

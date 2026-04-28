@@ -109,7 +109,7 @@ export default function MindMapCanvas() {
         <g ref={zoomGroupRef}>
           {connections.map(({ from, to }) => (
             <ConnectionLine key={`conn-${from.data.id}-${to.data.id}`} from={from} to={to}
-              nodeWidth={140} highlight={drag.targetNodeId === to.data.id} />
+              nodeWidth={(to as LayoutNode).textWidth || 140} highlight={drag.targetNodeId === to.data.id} />
           ))}
           {nodes.map(({ d3Node }) => (
             <MindMapNode key={d3Node.data.id} d3Node={d3Node}
