@@ -25,9 +25,9 @@ export default function MindMapCanvas() {
   // Compute layout when the map changes
   useEffect(() => {
     if (!currentMap) { setLayoutRoot(null); return; }
-    const root = computeLayout(currentMap.rootNode);
+    const root = computeLayout(currentMap.rootNode, currentMap.structure || 'logic');
     setLayoutRoot(root);
-  }, [currentMap?.rootNode, currentMap]);
+  }, [currentMap?.rootNode, currentMap?.structure, currentMap]);
 
   const { drag, handleMouseDown } = useDragNode(layoutRoot);
 

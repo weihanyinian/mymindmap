@@ -5,6 +5,7 @@ export interface IMindMapDocument extends Document {
   title: string;
   rootNode: IMindMapNodeDoc;
   theme: string;
+  structure: string;
   isPublic: boolean;
   version: number;
   createdAt: Date;
@@ -30,8 +31,9 @@ export interface IMindMapNodeDoc {
   notes: string;
   labels: string[];
   icons: string[];
-  createdAt: Date;
-  updatedAt: Date;
+  image?: string;
+  hyperlink?: string;
+  structure?: string;
 }
 
 const nodeStyleSchema = new Schema(
@@ -40,8 +42,8 @@ const nodeStyleSchema = new Schema(
     strokeColor: { type: String, default: '#4A90D9' },
     fontColor: { type: String, default: '#333333' },
     fontSize: { type: Number, default: 14, min: 8, max: 72 },
-    shape: { type: String, enum: ['rectangle', 'rounded', 'pill', 'underline'], default: 'rounded' },
-    lineType: { type: String, enum: ['curve', 'straight', 'angled'], default: 'curve' },
+    shape: { type: String, enum: ['rectangle', 'rounded', 'pill', 'underline', 'circle'], default: 'rounded' },
+    lineType: { type: String, enum: ['curve', 'straight', 'angled', 'step'], default: 'curve' },
     lineColor: { type: String, default: '#B0BEC5' },
     lineWidth: { type: Number, default: 2, min: 1, max: 10 },
   },
@@ -62,6 +64,9 @@ const mindMapNodeSchema = new Schema<IMindMapNodeDoc>(
     notes: { type: String, default: '', maxlength: 10000 },
     labels: [{ type: String }],
     icons: [{ type: String }],
+    image: { type: String },
+    hyperlink: { type: String },
+    structure: { type: String },
   },
   { _id: false, timestamps: true }
 );
@@ -74,7 +79,8 @@ const mindMapSchema = new Schema<IMindMapDocument>(
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     title: { type: String, required: true, maxlength: 200 },
     rootNode: { type: mindMapNodeSchema, required: true },
-    theme: { type: String, default: 'default' },
+    theme: { type: String, default: 'classic' },
+    structure: { type: String, default: 'logic' },
     isPublic: { type: Boolean, default: false },
     version: { type: Number, default: 1 },
   },

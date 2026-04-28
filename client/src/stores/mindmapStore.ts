@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { IMindMap, IMindMapSummary, IMindMapNode, INodeStyle } from '@mindflow/shared';
+import type { IMindMap, IMindMapSummary, IMindMapNode, INodeStyle, MapStructure } from '@mindflow/shared';
 import { NODE_COLOR_PALETTE, DEFAULT_NODE_STYLE } from '@mindflow/shared';
 import { mindmapApi } from '../api/mindmap.api';
 import { nanoid } from 'nanoid';
@@ -38,6 +38,8 @@ interface MindMapState {
   undo: () => void;
   redo: () => void;
   pushUndo: () => void;
+  setStructure: (structure: MapStructure) => void;
+  setTheme: (theme: string) => void;
   autoSave: () => Promise<void>;
   markClean: () => void;
 }
@@ -416,6 +418,24 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
       nodeMap: buildNodeMap(next),
       isDirty: true,
     }));
+  },
+
+  setStructure: (structure) => {
+    const { currentMap } = get();
+    if (!currentMap) return;
+    set({
+      currentMap: { ...currentMap, structure },
+      isDirty: true,
+    });
+  },
+
+  setTheme: (theme) => {
+    const { currentMap } = get();
+    if (!currentMap) return;
+    set({
+      currentMap: { ...currentMap, theme },
+      isDirty: true,
+    });
   },
 
   autoSave: async () => {

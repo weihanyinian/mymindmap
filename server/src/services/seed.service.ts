@@ -97,7 +97,8 @@ async function createDemoMap(userId: string) {
     userId,
     title: '入门指南',
     rootNode,
-    theme: 'default',
+    theme: 'classic',
+    structure: 'logic',
   });
 }
 

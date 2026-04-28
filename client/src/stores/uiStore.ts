@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type PanelTab = 'style' | 'notes' | 'info';
+export type PanelTab = 'style' | 'structure' | 'content';
 
 interface Toast {
   id: string;
@@ -13,6 +13,7 @@ interface UIState {
   propertyPanelOpen: boolean;
   propertyPanelTab: PanelTab;
   toasts: Toast[];
+  darkMode: boolean;
 
   toggleSidebar: () => void;
   openPanel: (tab?: PanelTab) => void;
@@ -20,6 +21,7 @@ interface UIState {
   setPanelTab: (tab: PanelTab) => void;
   addToast: (type: Toast['type'], message: string) => void;
   removeToast: (id: string) => void;
+  toggleDarkMode: () => void;
 }
 
 let toastId = 0;
@@ -29,6 +31,7 @@ export const useUIStore = create<UIState>((set) => ({
   propertyPanelOpen: false,
   propertyPanelTab: 'style',
   toasts: [],
+  darkMode: false,
 
   toggleSidebar: () =>
     set((s) => ({ sidebarOpen: !s.sidebarOpen })),
@@ -50,4 +53,6 @@ export const useUIStore = create<UIState>((set) => ({
 
   removeToast: (id) =>
     set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
+
+  toggleDarkMode: () => set((s) => ({ darkMode: !s.darkMode })),
 }));
