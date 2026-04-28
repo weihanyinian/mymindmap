@@ -96,6 +96,7 @@ export default function MindMapNode({ d3Node, isSelected, isDragTarget, hasChild
     <g
       transform={`translate(0, 0)`}
       data-node-id={node.id}
+      data-draggable={d3Node.depth > 0 ? 'true' : undefined}
       className={clsx('cursor-pointer', editing && 'pointer-events-auto')}
       onClick={handleClick}
       onMouseDown={onMouseDown}

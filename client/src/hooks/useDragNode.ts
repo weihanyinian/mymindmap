@@ -136,7 +136,7 @@ export function useDragNode(layoutRoot: LayoutNode | null) {
             moveNode(nodeId, target, siblingCount - 1);
           } else {
             // Reparent: drag to a new parent
-            const targetChildren = findNodeChildren(target)?.length || 0;
+            const targetChildren = findNodeChildren(layoutRoot, target)?.length || 0;
             moveNode(nodeId, target, targetChildren);
           }
         }

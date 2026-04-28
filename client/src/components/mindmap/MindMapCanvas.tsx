@@ -1,8 +1,9 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { useMindMapStore } from '../../stores/mindmapStore';
 import { computeLayout } from '../../lib/d3/layout';
-import { setupZoom } from '../../lib/d3/zoom';
+import { setupZoom, teardownZoom } from '../../lib/d3/zoom';
 import type { LayoutNode } from '../../lib/d3/layout';
+import type { ZoomBehavior } from 'd3-zoom';
 import { useDragNode } from '../../hooks/useDragNode';
 import MindMapNode from './MindMapNode';
 import ConnectionLine from './ConnectionLine';
@@ -15,10 +16,13 @@ import { Map } from 'lucide-react';
 export default function MindMapCanvas() {
   const svgRef = useRef<SVGSVGElement>(null);
   const zoomGroupRef = useRef<SVGGElement>(null);
+  const zoomBehaviorRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(null);
+  const zoomSetupForMapRef = useRef<string | null>(null);
   const { isLoading, currentMap, selectedNodeId, selectNode } = useMindMapStore();
   const [layoutRoot, setLayoutRoot] = useState<LayoutNode | null>(null);
   const t = useT();
 
+  // Compute layout when the map changes
   useEffect(() => {
     if (!currentMap) { setLayoutRoot(null); return; }
     const root = computeLayout(currentMap.rootNode);
@@ -27,14 +31,29 @@ export default function MindMapCanvas() {
 
   const { drag, handleMouseDown } = useDragNode(layoutRoot);
 
+  // Setup zoom once when the SVG first appears for a given map
   useEffect(() => {
-    if (!svgRef.current || !zoomGroupRef.current) return;
-    const z = setupZoom(svgRef.current, zoomGroupRef.current, () => {});
+    const mapId = currentMap?._id;
+    if (!svgRef.current || !zoomGroupRef.current || !layoutRoot || !mapId) return;
+    if (zoomSetupForMapRef.current === mapId) return;
+
+    // Teardown previous zoom if it exists
+    if (zoomBehaviorRef.current) {
+      teardownZoom(svgRef.current, zoomBehaviorRef.current);
+    }
+
+    const z = setupZoom(svgRef.current, zoomGroupRef.current, () => {}, currentMap.rootNode.id);
+    zoomBehaviorRef.current = z;
+    zoomSetupForMapRef.current = mapId;
+
     return () => {
-      svgRef.current?.removeEventListener('wheel', z as unknown as EventListener);
-      svgRef.current?.removeEventListener('mousedown', z as unknown as EventListener);
+      if (svgRef.current && zoomBehaviorRef.current) {
+        teardownZoom(svgRef.current, zoomBehaviorRef.current);
+        zoomBehaviorRef.current = null;
+        zoomSetupForMapRef.current = null;
+      }
     };
-  }, []);
+  }, [currentMap?._id, layoutRoot]);
 
   const handleSvgClick = useCallback((e: React.MouseEvent) => {
     if (e.target === svgRef.current || e.target === zoomGroupRef.current) selectNode(null);
@@ -78,7 +97,6 @@ export default function MindMapCanvas() {
           <filter id="node-shadow-hover" x="-20%" y="-20%" width="140%" height="150%">
             <feDropShadow dx="0" dy="2" stdDeviation="5" floodColor="rgba(0,0,0,0.12)" />
           </filter>
-          {/* Gradient for connection lines */}
           <linearGradient id="line-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#94a3b8" />
             <stop offset="100%" stopColor="#cbd5e1" />
@@ -89,12 +107,10 @@ export default function MindMapCanvas() {
           </linearGradient>
         </defs>
         <g ref={zoomGroupRef}>
-          {/* Connections */}
           {connections.map(({ from, to }) => (
             <ConnectionLine key={`conn-${from.data.id}-${to.data.id}`} from={from} to={to}
               nodeWidth={140} highlight={drag.targetNodeId === to.data.id} />
           ))}
-          {/* Nodes */}
           {nodes.map(({ d3Node }) => (
             <MindMapNode key={d3Node.data.id} d3Node={d3Node}
               isSelected={d3Node.data.id === selectedNodeId}
@@ -102,13 +118,11 @@ export default function MindMapCanvas() {
               hasChildren={d3Node.children ? d3Node.children.length > 0 : false}
               onMouseDown={(e) => handleMouseDown(d3Node.data.id, e)} />
           ))}
-          {/* Drag ghost line */}
           {drag.dragging && drag.draggedNodeId && (
             <line x1={drag.ghostX} y1={drag.ghostY} x2={drag.ghostX + 24} y2={drag.ghostY}
               stroke="#6366f1" strokeWidth={2} strokeDasharray="5 4" opacity={0.5}
               strokeLinecap="round" />
           )}
-          {/* Drop zone indicator */}
           {drag.dragging && drag.targetNodeId && (
             <circle cx={drag.ghostX} cy={drag.ghostY} r={6}
               fill="rgba(99,102,241,0.15)" stroke="#6366f1" strokeWidth={1.5}
@@ -117,12 +131,10 @@ export default function MindMapCanvas() {
         </g>
       </svg>
 
-      {/* Title label */}
       <div className="absolute top-3 left-3 glass rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 z-10 shadow-sm">
         {currentMap.title}
       </div>
 
-      {/* Mini map */}
       <MiniMap layoutRoot={layoutRoot} viewportWidth={800} viewportHeight={600} />
     </div>
   );
