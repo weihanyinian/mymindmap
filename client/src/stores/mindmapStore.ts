@@ -15,6 +15,7 @@ interface MindMapState {
 
   undoStack: IMindMapNode[];
   redoStack: IMindMapNode[];
+  copiedNode: IMindMapNode | null;
 
   fetchList: () => Promise<void>;
   loadMap: (id: string) => Promise<void>;
@@ -29,6 +30,8 @@ interface MindMapState {
   toggleCollapse: (id: string) => void;
   moveNode: (nodeId: string, newParentId: string, index: number) => void;
   reorderNode: (nodeId: string, direction: 'up' | 'down') => void;
+  copyNode: (id: string) => void;
+  pasteNode: (parentId: string) => void;
 
   undo: () => void;
   redo: () => void;
@@ -52,6 +55,14 @@ function cloneNode(node: IMindMapNode): IMindMapNode {
   return JSON.parse(JSON.stringify(node));
 }
 
+function deepCloneWithNewIds(node: IMindMapNode): IMindMapNode {
+  return {
+    ...JSON.parse(JSON.stringify(node)),
+    id: nanoid(8),
+    children: node.children.map(deepCloneWithNewIds),
+  };
+}
+
 export const useMindMapStore = create<MindMapState>((set, get) => ({
   mindMaps: [],
   currentMap: null,
@@ -63,6 +74,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
   isLoadingList: false,
   undoStack: [],
   redoStack: [],
+  copiedNode: null,
 
   fetchList: async () => {
     set({ isLoadingList: true });
@@ -338,6 +350,40 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
     set({
       currentMap: { ...currentMap, rootNode: newRoot },
       nodeMap: buildNodeMap(newRoot),
+      isDirty: true,
+    });
+  },
+
+  copyNode: (id) => {
+    const { nodeMap } = get();
+    const node = nodeMap.get(id);
+    if (!node) return;
+    set({ copiedNode: cloneNode(node) });
+  },
+
+  pasteNode: (parentId) => {
+    const { currentMap, copiedNode, undoStack } = get();
+    if (!currentMap || !copiedNode) return;
+
+    if (undoStack.length === 0) {
+      set({ undoStack: [cloneNode(currentMap.rootNode)] });
+    }
+
+    // Deep clone with new IDs
+    const cloned = deepCloneWithNewIds(copiedNode);
+
+    const insertInTree = (node: IMindMapNode): IMindMapNode => {
+      if (node.id === parentId) {
+        return { ...node, children: [...node.children, cloned], collapsed: false };
+      }
+      return { ...node, children: node.children.map(insertInTree) };
+    };
+
+    const newRoot = insertInTree(currentMap.rootNode);
+    set({
+      currentMap: { ...currentMap, rootNode: newRoot },
+      nodeMap: buildNodeMap(newRoot),
+      selectedNodeId: cloned.id,
       isDirty: true,
     });
   },
