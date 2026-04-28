@@ -23,12 +23,15 @@ export default function MindMapList() {
 
   if (mindMaps.length === 0) {
     return (
-      <p className="text-xs text-gray-400 text-center py-8 px-3">{t.sidebar.noMaps}</p>
+      <div className="text-center py-10 px-4">
+        <FileText className="w-8 h-8 text-gray-200 mx-auto mb-3" />
+        <p className="text-xs text-gray-400 leading-relaxed">{t.sidebar.noMaps}</p>
+      </div>
     );
   }
 
   return (
-    <div className="px-3 space-y-0.5">
+    <div className="space-y-0.5">
       {mindMaps.map((m) => (
         <MindMapListItem
           key={m._id}
@@ -77,32 +80,45 @@ function MindMapListItem({
     <>
       <div
         className={clsx(
-          'flex items-center gap-2 px-2 py-2 rounded-lg cursor-pointer group transition-colors',
-          isActive ? 'bg-primary-50 border border-primary-200' : 'hover:bg-gray-50 border border-transparent'
+          'flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl cursor-pointer group transition-all duration-200',
+          isActive
+            ? 'bg-primary-50/80 border border-primary-200/60 shadow-sm'
+            : 'hover:bg-gray-50/80 border border-transparent'
         )}
         onClick={onClick}
       >
-        <FileText className={clsx('w-4 h-4 shrink-0', isActive ? 'text-primary-500' : 'text-gray-400')} />
+        <div className={clsx(
+          'w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors',
+          isActive ? 'bg-primary-100 text-primary-600' : 'bg-gray-100 text-gray-400 group-hover:bg-gray-200/80'
+        )}>
+          <FileText className="w-4 h-4" />
+        </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-700 truncate">{map.title}</p>
-          <p className="text-xs text-gray-400 truncate">
-            {map.rootNodeTitle} &middot; {map.nodeCount} {t.sidebar.nodes}
+          <p className={clsx(
+            'text-sm font-medium truncate transition-colors',
+            isActive ? 'text-primary-700' : 'text-gray-700'
+          )}>{map.title}</p>
+          <p className="text-xs text-gray-400 truncate mt-0.5">
+            {map.nodeCount} {t.sidebar.nodes}
           </p>
         </div>
         <div className="relative" ref={menuRef}>
           <button
             onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
-            className={clsx('p-0.5 rounded hover:bg-gray-200', menuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100')}
+            className={clsx(
+              'p-1 rounded-lg hover:bg-gray-200/80 transition-all',
+              menuOpen ? 'opacity-100 bg-gray-200/80' : 'opacity-0 group-hover:opacity-100'
+            )}
           >
-            <MoreHorizontal className="w-4 h-4 text-gray-400" />
+            <MoreHorizontal className="w-3.5 h-3.5 text-gray-400" />
           </button>
           {menuOpen && (
-            <div className="absolute right-0 top-6 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50 min-w-[100px]">
+            <div className="absolute right-0 top-8 glass-lg rounded-xl py-1.5 z-50 min-w-[120px] shadow-lg animate-scale-in">
               <button
-                className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-red-600 hover:bg-red-50"
+                className="flex items-center gap-2.5 w-full px-3.5 py-2 text-xs text-red-600 hover:bg-red-50/80 transition-colors"
                 onClick={(e) => { e.stopPropagation(); setConfirmOpen(true); setMenuOpen(false); }}
               >
-                <Trash2 className="w-3 h-3" />
+                <Trash2 className="w-3.5 h-3.5" />
                 {t.common.delete}
               </button>
             </div>

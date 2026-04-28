@@ -2,7 +2,7 @@ import { useMindMapStore } from '../../stores/mindmapStore';
 import { useUIStore } from '../../stores/uiStore';
 import {
   Undo2, Redo2, Plus, Trash2, PanelRightOpen, PanelRightClose,
-  Download, Upload, PanelLeft, ChevronDown,
+  Download, Upload, PanelLeft, ChevronDown, Save,
 } from 'lucide-react';
 import { useCallback, useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -107,61 +107,95 @@ export default function Toolbar() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const canAddChild = !!selectedNodeId;
+  const canAddSibling = !!selectedNodeId && currentMap?.rootNode.id !== selectedNodeId;
+  const canDelete = !!selectedNodeId && currentMap?.rootNode.id !== selectedNodeId;
+
   return (
-    <div className="h-10 bg-white border-b border-gray-200 flex items-center px-2 gap-1 shrink-0" onKeyDown={handleKeyDown}>
+    <div className="h-11 bg-white/90 backdrop-blur-xl border-b border-gray-200/60 flex items-center px-3 gap-1 shrink-0" onKeyDown={handleKeyDown}>
+      {/* Sidebar toggle */}
       {!sidebarOpen && (
-        <button onClick={toggleSidebar} className="p-1.5 rounded hover:bg-gray-100 text-gray-500" title={t.toolbar.showSidebar}>
+        <button onClick={toggleSidebar} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors" title={t.toolbar.showSidebar}>
           <PanelLeft className="w-4 h-4" />
         </button>
       )}
 
-      <div className="w-px h-5 bg-gray-200 mx-1" />
+      <div className="w-px h-5 bg-gray-200/60 mx-1.5" />
 
-      <button onClick={undo} disabled={undoStack.length === 0} className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 text-gray-600" title={t.toolbar.undo}>
+      {/* Undo / Redo */}
+      <button onClick={undo} disabled={undoStack.length === 0}
+        className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 text-gray-600 transition-colors"
+        title={t.toolbar.undo}>
         <Undo2 className="w-4 h-4" />
       </button>
-      <button onClick={redo} disabled={redoStack.length === 0} className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 text-gray-600" title={t.toolbar.redo}>
+      <button onClick={redo} disabled={redoStack.length === 0}
+        className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 text-gray-600 transition-colors"
+        title={t.toolbar.redo}>
         <Redo2 className="w-4 h-4" />
       </button>
 
-      <div className="w-px h-5 bg-gray-200 mx-1" />
+      <div className="w-px h-5 bg-gray-200/60 mx-1.5" />
 
-      <button onClick={() => selectedNodeId && addChild(selectedNodeId)} disabled={!selectedNodeId} className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 text-gray-600" title={t.toolbar.addChild}>
+      {/* Node operations */}
+      <button onClick={() => selectedNodeId && addChild(selectedNodeId)} disabled={!canAddChild}
+        className="p-1.5 rounded-lg hover:bg-primary-50 disabled:opacity-30 text-gray-600 hover:text-primary-600 transition-colors"
+        title={t.toolbar.addChild}>
         <Plus className="w-4 h-4" />
       </button>
-      <button onClick={() => selectedNodeId && currentMap && selectedNodeId !== currentMap.rootNode.id && addSibling(selectedNodeId)} disabled={!selectedNodeId || currentMap?.rootNode.id === selectedNodeId} className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 text-gray-600" title={t.toolbar.addSibling}>
+      <button onClick={() => selectedNodeId && currentMap && selectedNodeId !== currentMap.rootNode.id && addSibling(selectedNodeId)} disabled={!canAddSibling}
+        className="p-1.5 rounded-lg hover:bg-primary-50 disabled:opacity-30 text-gray-600 hover:text-primary-600 transition-colors"
+        title={t.toolbar.addSibling}>
         <span className="text-xs font-bold w-4 h-4 flex items-center justify-center">+S</span>
       </button>
-      <button onClick={() => selectedNodeId && deleteNode(selectedNodeId)} disabled={!selectedNodeId || currentMap?.rootNode.id === selectedNodeId} className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 text-gray-600" title={t.toolbar.deleteNode}>
+      <button onClick={() => selectedNodeId && deleteNode(selectedNodeId)} disabled={!canDelete}
+        className="p-1.5 rounded-lg hover:bg-red-50 disabled:opacity-30 text-gray-600 hover:text-red-600 transition-colors"
+        title={t.toolbar.deleteNode}>
         <Trash2 className="w-4 h-4" />
       </button>
 
-      <div className="w-px h-5 bg-gray-200 mx-1" />
+      <div className="w-px h-5 bg-gray-200/60 mx-1.5" />
 
+      {/* Export */}
       <div className="relative" ref={exportMenuRef}>
-        <button onClick={() => setExportMenuOpen(!exportMenuOpen)} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 flex items-center gap-0.5" title={t.toolbar.export}>
+        <button onClick={() => setExportMenuOpen(!exportMenuOpen)}
+          className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-600 flex items-center gap-0.5 transition-colors"
+          title={t.toolbar.export}>
           <Download className="w-4 h-4" />
           <ChevronDown className="w-3 h-3" />
         </button>
         {exportMenuOpen && (
-          <div className="absolute left-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50 min-w-[150px]">
-            <button onClick={handleExportJSON} className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50">{t.toolbar.exportJSON}</button>
-            <button onClick={handleExportMarkdown} className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50">{t.toolbar.exportMarkdown}</button>
-            <button onClick={handleExportPNG} disabled={exportingPNG} className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 disabled:opacity-50">{exportingPNG ? t.toolbar.exporting : t.toolbar.exportPNG}</button>
+          <div className="absolute left-0 top-9 glass-lg rounded-xl py-1.5 z-50 min-w-[160px] shadow-lg animate-scale-in">
+            <button onClick={handleExportJSON} className="w-full text-left px-3.5 py-2 text-xs text-gray-700 hover:bg-gray-50/80 transition-colors">{t.toolbar.exportJSON}</button>
+            <button onClick={handleExportMarkdown} className="w-full text-left px-3.5 py-2 text-xs text-gray-700 hover:bg-gray-50/80 transition-colors">{t.toolbar.exportMarkdown}</button>
+            <button onClick={handleExportPNG} disabled={exportingPNG} className="w-full text-left px-3.5 py-2 text-xs text-gray-700 hover:bg-gray-50/80 transition-colors disabled:opacity-50">
+              {exportingPNG ? t.toolbar.exporting : t.toolbar.exportPNG}
+            </button>
           </div>
         )}
       </div>
 
-      <button onClick={() => fileInputRef.current?.click()} className="p-1.5 rounded hover:bg-gray-100 text-gray-600" title={t.toolbar.importJSON}>
+      {/* Import */}
+      <button onClick={() => fileInputRef.current?.click()}
+        className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors"
+        title={t.toolbar.importJSON}>
         <Upload className="w-4 h-4" />
       </button>
       <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImportJSON} />
 
       <div className="flex-1" />
 
-      <button onClick={() => autoSave()} className="text-xs text-gray-400 px-2" title={t.toolbar.save}>{t.toolbar.save}</button>
+      {/* Save status */}
+      <button onClick={() => autoSave()}
+        className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors"
+        title={t.toolbar.save}>
+        <Save className="w-3 h-3" />
+        {t.toolbar.save}
+      </button>
 
-      <button onClick={propertyPanelOpen ? closePanel : () => openPanel()} className="p-1.5 rounded hover:bg-gray-100 text-gray-600" title={propertyPanelOpen ? t.toolbar.closePanel : t.toolbar.openPanel}>
+      {/* Panel toggle */}
+      <button onClick={propertyPanelOpen ? closePanel : () => openPanel()}
+        className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors"
+        title={propertyPanelOpen ? t.toolbar.closePanel : t.toolbar.openPanel}>
         {propertyPanelOpen ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
       </button>
     </div>

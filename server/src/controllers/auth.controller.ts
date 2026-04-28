@@ -4,8 +4,8 @@ import * as authService from '../services/auth.service';
 
 export async function register(req: AuthRequest, res: Response, next: NextFunction) {
   try {
-    const { email, username, password } = req.body;
-    const result = await authService.register(email, username, password);
+    const { username, password } = req.body;
+    const result = await authService.register(username, password);
     res.status(201).json(result);
   } catch (err) {
     next(err);
@@ -14,8 +14,8 @@ export async function register(req: AuthRequest, res: Response, next: NextFuncti
 
 export async function login(req: AuthRequest, res: Response, next: NextFunction) {
   try {
-    const { email, password } = req.body;
-    const result = await authService.login(email, password);
+    const { username, password } = req.body;
+    const result = await authService.login(username, password);
     res.json(result);
   } catch (err) {
     next(err);

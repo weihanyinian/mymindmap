@@ -9,7 +9,6 @@ import type { IUser, IAuthResponse } from '@mindflow/shared';
 function toUserResponse(doc: IUserDocument): IUser {
   return {
     _id: doc._id.toString(),
-    email: doc.email,
     username: doc.username,
     avatar: doc.avatar,
     createdAt: doc.createdAt.toISOString(),
@@ -29,35 +28,31 @@ function generateTokens(userId: string, tokenVersion: number): {
 }
 
 export async function register(
-  email: string,
   username: string,
   password: string
 ): Promise<IAuthResponse> {
-  const existing = await User.findOne({
-    $or: [{ email }, { username }],
-  });
+  const existing = await User.findOne({ username });
   if (existing) {
-    const field = existing.email === email ? 'email' : 'username';
-    throw Object.assign(new Error(`${field} already exists`), {
+    throw Object.assign(new Error('Username already exists'), {
       statusCode: 409,
       code: 'DUPLICATE_FIELD',
-      details: [{ field, message: `This ${field} is already taken` }],
+      details: [{ field: 'username', message: 'This username is already taken' }],
     });
   }
 
-  const user = await User.create({ email, username, password });
+  const user = await User.create({ username, password });
   const tokens = generateTokens(user._id.toString(), user.tokenVersion);
 
   return { user: toUserResponse(user), ...tokens };
 }
 
 export async function login(
-  email: string,
+  username: string,
   password: string
 ): Promise<IAuthResponse> {
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ username });
   if (!user) {
-    throw Object.assign(new Error('Invalid email or password'), {
+    throw Object.assign(new Error('Invalid username or password'), {
       statusCode: 401,
       code: 'INVALID_CREDENTIALS',
     });
@@ -65,7 +60,7 @@ export async function login(
 
   const valid = await user.comparePassword(password);
   if (!valid) {
-    throw Object.assign(new Error('Invalid email or password'), {
+    throw Object.assign(new Error('Invalid username or password'), {
       statusCode: 401,
       code: 'INVALID_CREDENTIALS',
     });

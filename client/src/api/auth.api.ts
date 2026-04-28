@@ -2,11 +2,11 @@ import { api } from './client';
 import type { IAuthResponse, IUser } from '@mindflow/shared';
 
 export const authApi = {
-  register(data: { email: string; username: string; password: string }) {
+  register(data: { username: string; password: string }) {
     return api.post('auth/register', { json: data }).json<IAuthResponse>();
   },
 
-  login(data: { email: string; password: string }) {
+  login(data: { username: string; password: string }) {
     return api.post('auth/login', { json: data }).json<IAuthResponse>();
   },
 

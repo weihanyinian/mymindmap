@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { useMindMapStore } from '../stores/mindmapStore';
 import type { LayoutNode } from '../lib/d3/layout';
+import type { IMindMapNode } from '@mindflow/shared';
 
 interface DragState {
   dragging: boolean;
@@ -20,7 +21,6 @@ export function useDragNode(layoutRoot: LayoutNode | null) {
   });
 
   const { currentMap, moveNode, selectNode } = useMindMapStore();
-  const svgRef = useRef<SVGSVGElement | null>(null);
 
   const findClosestNode = useCallback(
     (svgX: number, svgY: number, excludeId: string): string | null => {
@@ -43,11 +43,9 @@ export function useDragNode(layoutRoot: LayoutNode | null) {
       }
 
       search(layoutRoot);
-      // TS can't track mutation through the closure
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result = closest as any;
-      if (result && result.dist < 80) {
-        return result.id as string;
+      const result = closest as { id: string; dist: number } | null;
+      if (result && result.dist < 100) {
+        return result.id;
       }
       return null;
     },
@@ -56,16 +54,33 @@ export function useDragNode(layoutRoot: LayoutNode | null) {
 
   const getSVGPoint = useCallback(
     (clientX: number, clientY: number): { x: number; y: number } => {
-      if (!svgRef.current) return { x: 0, y: 0 };
-      const pt = svgRef.current.createSVGPoint();
+      const svg = document.querySelector('svg');
+      if (!svg) return { x: 0, y: 0 };
+      const pt = svg.createSVGPoint();
       pt.x = clientX;
       pt.y = clientY;
-      const ctm = svgRef.current.getScreenCTM();
+      const ctm = svg.getScreenCTM();
       if (!ctm) return { x: 0, y: 0 };
       const svgPt = pt.matrixTransform(ctm.inverse());
       return { x: svgPt.x, y: svgPt.y };
     },
     []
+  );
+
+  const findParentNode = useCallback(
+    (nodeId: string): IMindMapNode | null => {
+      if (!currentMap) return null;
+      function findParent(node: IMindMapNode): IMindMapNode | null {
+        for (const child of node.children) {
+          if (child.id === nodeId) return node;
+          const found = findParent(child);
+          if (found) return found;
+        }
+        return null;
+      }
+      return findParent(currentMap.rootNode);
+    },
+    [currentMap]
   );
 
   const handleMouseDown = useCallback(
@@ -113,34 +128,39 @@ export function useDragNode(layoutRoot: LayoutNode | null) {
         });
 
         if (target && target !== nodeId) {
-          // Move the dragged node to be a child of the target
-          const targetNode = findNodeInLayout(layoutRoot, target);
-          if (targetNode) {
-            const targetChildren = targetNode.data.children?.length || 0;
+          // Check if target is the current parent — reorder instead of reparent
+          const currentParent = findParentNode(nodeId);
+          if (currentParent && target === currentParent.id) {
+            // Reorder to end of siblings
+            const siblingCount = currentParent.children.length;
+            moveNode(nodeId, target, siblingCount - 1);
+          } else {
+            // Reparent: drag to a new parent
+            const targetChildren = findNodeChildren(target)?.length || 0;
             moveNode(nodeId, target, targetChildren);
           }
         }
+        // If dropping on empty space (no target), node stays in place
       };
 
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
     },
-    [currentMap, layoutRoot, getSVGPoint, findClosestNode, moveNode]
+    [currentMap, layoutRoot, getSVGPoint, findClosestNode, moveNode, findParentNode]
   );
 
   return {
     drag,
-    svgRef,
     handleMouseDown,
   };
 }
 
-function findNodeInLayout(root: LayoutNode | null, id: string): LayoutNode | null {
+function findNodeChildren(root: LayoutNode | null, id: string): IMindMapNode['children'] | null {
   if (!root) return null;
-  if (root.data.id === id) return root;
+  if (root.data.id === id) return root.data.children;
   if (root.children) {
     for (const child of root.children) {
-      const found = findNodeInLayout(child as LayoutNode, id);
+      const found = findNodeChildren(child as LayoutNode, id);
       if (found) return found;
     }
   }

@@ -1,6 +1,5 @@
 export interface IUser {
   _id: string;
-  email: string;
   username: string;
   avatar: string | null;
   createdAt: string;
@@ -19,12 +18,11 @@ export interface IAuthResponse {
 }
 
 export interface ILoginRequest {
-  email: string;
+  username: string;
   password: string;
 }
 
 export interface IRegisterRequest {
-  email: string;
   username: string;
   password: string;
 }

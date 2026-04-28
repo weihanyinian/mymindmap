@@ -3,11 +3,10 @@ import { MindMap } from '../models/MindMap';
 import { nanoid } from 'nanoid';
 
 export async function seedAdminUser() {
-  const existing = await User.findOne({ email: 'admin@mindflow.com' });
+  const existing = await User.findOne({ username: 'admin' });
   if (existing) return existing;
 
   const admin = await User.create({
-    email: 'admin@mindflow.com',
     username: 'admin',
     password: '123456',
   });

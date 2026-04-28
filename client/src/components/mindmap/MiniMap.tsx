@@ -41,7 +41,7 @@ export default function MiniMap({ layoutRoot, viewportWidth, viewportHeight }: M
 
     const treeW = maxX - minX || 1;
     const treeH = maxY - minY || 1;
-    const padding = 20;
+    const padding = 16;
     const scaleX = (width - padding * 2) / treeW;
     const scaleY = (height - padding * 2) / treeH;
     const scale = Math.min(scaleX, scaleY);
@@ -49,12 +49,21 @@ export default function MiniMap({ layoutRoot, viewportWidth, viewportHeight }: M
     const offsetX = padding + (width - padding * 2 - treeW * scale) / 2 - minX * scale;
     const offsetY = padding + (height - padding * 2 - treeH * scale) / 2 - minY * scale;
 
-    // Draw
-    ctx.fillStyle = '#f3f4f6';
-    ctx.fillRect(0, 0, width, height);
+    // Background with rounded corners
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.beginPath();
+    ctx.roundRect(0, 0, width, height, 4);
+    ctx.fill();
 
-    ctx.strokeStyle = '#d1d5db';
-    ctx.lineWidth = 0.5;
+    // Grid dots
+    ctx.fillStyle = 'rgba(0,0,0,0.04)';
+    for (let gx = 0; gx < width; gx += 8) {
+      for (let gy = 0; gy < height; gy += 8) {
+        ctx.beginPath();
+        ctx.arc(gx, gy, 0.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
 
     function drawNode(node: LayoutNode, c: CanvasRenderingContext2D) {
       const nx = node.x * scale + offsetX;
@@ -65,29 +74,31 @@ export default function MiniMap({ layoutRoot, viewportWidth, viewportHeight }: M
         c.beginPath();
         c.moveTo(node.parent.x * scale + offsetX, node.parent.y * scale + offsetY);
         c.lineTo(nx, ny);
+        c.strokeStyle = 'rgba(148,163,184,0.4)';
+        c.lineWidth = 0.8;
         c.stroke();
       }
 
       // Node dot
-      c.fillStyle = '#9ca3af';
+      c.fillStyle = '#94a3b8';
       c.beginPath();
-      c.arc(nx, ny, 2, 0, Math.PI * 2);
+      c.arc(nx, ny, 2.2, 0, Math.PI * 2);
       c.fill();
+
+      // Node dot border
+      c.strokeStyle = 'rgba(255,255,255,0.8)';
+      c.lineWidth = 0.8;
+      c.stroke();
 
       if (node.children) {
         node.children.forEach((ch) => drawNode(ch as LayoutNode, c));
       }
     }
     drawNode(layoutRoot, ctx);
-
-    // Viewport indicator
-    ctx.strokeStyle = '#3b82f6';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(0, 0, viewportWidth * scale, viewportHeight * scale);
   }, [layoutRoot, viewportWidth, viewportHeight]);
 
   return (
-    <div className="absolute bottom-4 right-4 border border-gray-200 rounded-lg overflow-hidden shadow-sm bg-white opacity-70 hover:opacity-100 transition-opacity">
+    <div className="absolute bottom-4 right-4 glass rounded-xl overflow-hidden shadow-glass opacity-60 hover:opacity-100 transition-all duration-300 z-10 border border-gray-200/50">
       <canvas ref={canvasRef} className="w-[180px] h-[120px]" />
     </div>
   );

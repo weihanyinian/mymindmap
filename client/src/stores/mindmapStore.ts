@@ -28,6 +28,7 @@ interface MindMapState {
   deleteNode: (id: string) => void;
   toggleCollapse: (id: string) => void;
   moveNode: (nodeId: string, newParentId: string, index: number) => void;
+  reorderNode: (nodeId: string, direction: 'up' | 'down') => void;
 
   undo: () => void;
   redo: () => void;
@@ -302,6 +303,38 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
     };
 
     const newRoot = insertIntoTree(afterRemove);
+    set({
+      currentMap: { ...currentMap, rootNode: newRoot },
+      nodeMap: buildNodeMap(newRoot),
+      isDirty: true,
+    });
+  },
+
+  reorderNode: (nodeId, direction) => {
+    const { currentMap } = get();
+    if (!currentMap || nodeId === currentMap.rootNode.id) return;
+
+    // Save undo state
+    set((s) => ({
+      undoStack: s.undoStack.length === 0
+        ? [cloneNode(currentMap.rootNode)]
+        : [...s.undoStack, cloneNode(currentMap.rootNode)].slice(-50),
+      redoStack: [],
+    }));
+
+    const reorderInTree = (node: IMindMapNode): IMindMapNode => {
+      const idx = node.children.findIndex((c) => c.id === nodeId);
+      if (idx !== -1) {
+        const newChildren = [...node.children];
+        const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+        if (targetIdx < 0 || targetIdx >= newChildren.length) return node;
+        [newChildren[idx], newChildren[targetIdx]] = [newChildren[targetIdx], newChildren[idx]];
+        return { ...node, children: newChildren };
+      }
+      return { ...node, children: node.children.map(reorderInTree) };
+    };
+
+    const newRoot = reorderInTree(currentMap.rootNode);
     set({
       currentMap: { ...currentMap, rootNode: newRoot },
       nodeMap: buildNodeMap(newRoot),

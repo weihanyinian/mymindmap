@@ -10,8 +10,8 @@ interface AuthState {
   error: string | null;
 
   initialize: () => Promise<void>;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, username: string, password: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<void>;
+  register: (username: string, password: string) => Promise<void>;
   logout: () => void;
   clearError: () => void;
 }
@@ -38,10 +38,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  login: async (email, password) => {
+  login: async (username, password) => {
     set({ error: null });
     try {
-      const res = await authApi.login({ email, password });
+      const res = await authApi.login({ username, password });
       setTokens(res.accessToken, res.refreshToken);
       set({ user: res.user, isAuthenticated: true });
     } catch (err: unknown) {
@@ -51,10 +51,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  register: async (email, username, password) => {
+  register: async (username, password) => {
     set({ error: null });
     try {
-      const res = await authApi.register({ email, username, password });
+      const res = await authApi.register({ username, password });
       setTokens(res.accessToken, res.refreshToken);
       set({ user: res.user, isAuthenticated: true });
     } catch (err: unknown) {
